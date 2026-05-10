@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Search</title>
+  <link rel="stylesheet" href="search.css" />
+</head>
+<body>
+  <main class="container page">
+    <div class="pageHead">
+      <div class="brand" aria-label="Brand">
+        <span class="brand__dot" aria-hidden="true"></span>
+        <span class="brand__text">SGM</span>
+      </div>
+
+      <nav class="nav" aria-label="Primary">
+        <a class="nav__item" href="./index.html">Home</a>
+        <a class="nav__item" href="./students.html"> 🎓Students</a>
+
+        <a class="nav__item" href="./subjects.html"> 📚 Subjects</a>
+        <a class="nav__item" href="./results.php"> 📋 Results</a>
+        <a class="nav__item nav__item--active" href="./search.html" aria-current="page"> 🔍 Search</a>
+        <a class="nav__item" href="./rankings.html">🥇 Rankings</a>
+      </nav>
+    </div>
+
+    <h1 class="pageTitle">Search</h1>
+    <p class="pageSubtitle">Search for students, subjects and view results</p>
+
+    <section class="card" aria-label="Search">
+      <div class="cardHead">
+        <div class="tabs" role="tablist" aria-label="Search tabs">
+          <button class="tabBtn tabBtn--active" type="button" data-tab="students" role="tab" aria-selected="true">Students</button>
+          <button class="tabBtn" type="button" data-tab="subjects" role="tab" aria-selected="false">Subjects</button>
+          <button class="tabBtn" type="button" data-tab="results" role="tab" aria-selected="false">Results</button>
+        </div>
+
+        <div class="searchBar">
+          <input class="input" id="q" placeholder="Enter code, last name, first name or major..." />
+          <button class="btn btn--accent" id="btnSearch" type="button">Search</button>
+          
+        </form>
+    </div>
+</div>
+
+</body>
+</html>
+        </div>
+      </div>
+
+      <div class="list" id="list" aria-live="polite">
+        <div class="empty" id="hint">Type something and press Search.</div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      const listEl = document.getElementById('list');
+      const qEl = document.getElementById('q');
+      const btn = document.getElementById('btnSearch');
+      const tabBtns = Array.from(document.querySelectorAll('[data-tab]'));
+      let tab = 'students';
+
+      function setActiveTab(next) {
+        tab = next;
+        tabBtns.forEach(b => {
+          const active = b.dataset.tab === tab;
+          b.classList.toggle('tabBtn--active', active);
+          b.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+      }
+
+      function esc(s) {
+        return String(s)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      function render(data) {
+        listEl.innerHTML = '';
+        if (!data || !Array.isArray(data.items) || data.items.length === 0) {
+          listEl.innerHTML = '<div class="empty">No results found.</div>';
+          return;
+        }
+
+        const html = data.items.map(it => {
+          const title = esc(it.title || '');
+          const sub = esc(it.sub || '');
+          const badge = esc(it.badge || '');
+          const badgeClass = (it.badgeType === 'primary') ? 'pill pill--primary' : 'pill';
+          return (
+            '<div class="item">' +
+              '<div>' +
+                '<div class="item__title">' + title + '</div>' +
+                (sub ? '<div class="item__sub">' + sub + '</div>' : '') +
+              '</div>' +
+              (badge ? '<div class="' + badgeClass + '">' + badge + '</div>' : '') +
+            '</div>'
+          );
+        }).join('');
+
+        listEl.innerHTML = html;
+      }
+
+      async function doSearch() {
+        const q = qEl.value.trim();
+        if (!q) {
+          listEl.innerHTML = '<div class="empty">Type something and press Search.</div>';
+          return;
+        }
+
+        listEl.innerHTML = '<div class="empty">Searching...</div>';
+        const url = './search.php?tab=' + encodeURIComponent(tab) + '&q=' + encodeURIComponent(q);
+        const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+        const data = await res.json();
+        render(data);
+      }
+
+      tabBtns.forEach(b => b.addEventListener('click', () => {
+        setActiveTab(b.dataset.tab);
+        if (qEl.value.trim()) doSearch();
+      }));
+
+      btn.addEventListener('click', doSearch);
+      qEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') doSearch(); });
+    })();
+  </script>
+</body>
+</html>
+
+
